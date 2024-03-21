@@ -2,6 +2,7 @@ import json
 import threading
 import time
 import asyncio
+import re
 
 from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.message.element import Image, Voice
@@ -11,6 +12,8 @@ from quart import Quart, request
 
 from constants import config, BotPlatform
 from universal import handle_message
+
+from urllib.parse import unquote
 
 app = Quart(__name__)
 
@@ -140,6 +143,7 @@ async def v2_chat():
 async def v2_chat_response():
     """异步请求时，配合/v2/chat获取内容"""
     request_id = request.args.get("request_id")
+    request_id = re.sub(r'^[%22%27"\'"]*|[%22%27"\'"]*$', '', request_id)     # 添加替换操作，以兼容头部和尾部带有引号和URL编码引号的request_id。
     bot_request: BotRequest = request_dic.get(request_id, None)
     if bot_request is None:
         return ResponseResult(message="没有更多了！", result_status=RESPONSE_FAILED).to_json()
